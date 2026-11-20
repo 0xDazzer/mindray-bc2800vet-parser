@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  @media print {
+    [data-noprint] { display: none !important; }
+    #canvas { background: #fff !important; padding: 0 !important; display: block !important; }
+    [data-page] { width: auto !important; box-shadow: none !important; border-radius: 0 !important; margin: 0 !important; padding: 34px 30px !important; }
+    @page { size: A4; margin: 10mm; }
+  }
+</style>
+</helmet>
+
+<div id="canvas" style="background:#EDEBE4; min-height:100vh; padding:48px; font-family:'IBM Plex Sans',Arial,sans-serif;">
+
+  <div data-noprint style="width:794px; margin:0 auto 24px; font-family:'IBM Plex Mono',monospace; font-size:12px; color:#75726A; letter-spacing:.3px;">
+    ОБЩИЙ АНАЛИЗ КРОВИ · A4 · значения и поля можно редактировать прямо в макете
+  </div>
+
+  <div style="display:flex; flex-direction:column; align-items:center;">
+    <div data-page data-screen-label="ОАК" style="width:794px; background:#fff; box-shadow:0 6px 28px rgba(0,0,0,.10); border-radius:3px; padding:48px 44px 36px; font-family:'IBM Plex Sans',sans-serif; color:#15252A;">
+
+      <div style="display:flex; gap:16px; align-items:flex-start;">
+        <div style="width:5px; align-self:stretch; background:#1F7A86; border-radius:3px;"></div>
+        <div style="flex:1; display:flex; justify-content:space-between; align-items:flex-start; gap:16px;">
+          <div>
+            <div style="font-family:'Archivo',sans-serif; font-size:24px; font-weight:700; letter-spacing:-.4px; line-height:1.05;">{{ reportTitle }}</div>
+            <div style="font-size:11px; color:#5C6B6F; margin-top:5px; letter-spacing:.2px;">Гематологическое исследование · автоматический анализатор</div>
+          </div>
+          <div style="flex:none; font-family:'IBM Plex Mono',monospace; font-size:9px; color:#1F7A86; text-align:right; line-height:1.6;">№ пробы<br><span style="font-size:15px; font-weight:600; color:#15252A;">142</span></div>
+        </div>
+      </div>
+
+      <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:14px 22px; margin-top:22px; padding:16px 18px; background:#F5F8F8; border-radius:8px; font-size:11.5px;">
+        <div><div style="color:#7E8C90; font-size:9px; text-transform:uppercase; letter-spacing:.6px; margin-bottom:2px;">Пациент</div><div style="font-weight:600;">Барс</div></div>
+        <div><div style="color:#7E8C90; font-size:9px; text-transform:uppercase; letter-spacing:.6px; margin-bottom:2px;">Вид · Пол</div><div style="font-weight:600;">Кошка · Муж</div></div>
+        <div><div style="color:#7E8C90; font-size:9px; text-transform:uppercase; letter-spacing:.6px; margin-bottom:2px;">Возраст</div><div style="font-weight:600;">Взрослый 6Y</div></div>
+        <div><div style="color:#7E8C90; font-size:9px; text-transform:uppercase; letter-spacing:.6px; margin-bottom:2px;">Клиент</div><div style="font-weight:600;">Иванова</div></div>
+        <div><div style="color:#7E8C90; font-size:9px; text-transform:uppercase; letter-spacing:.6px; margin-bottom:2px;">Врач</div><div style="font-weight:600;">Петров А. В.</div></div>
+        <div><div style="color:#7E8C90; font-size:9px; text-transform:uppercase; letter-spacing:.6px; margin-bottom:2px;">Время анализа</div><div style="font-weight:600;">2026/06/16 09:14</div></div>
+      </div>
+
+      <div style="display:grid; grid-template-columns:1fr 70px 54px 92px 170px; gap:0 12px; align-items:center; font-size:9px; font-weight:600; text-transform:uppercase; letter-spacing:.6px; color:#7E8C90; padding:0 10px 7px; margin-top:24px; border-bottom:1px solid #E4EAEB;">
+        <div>Показатель</div><div>Результат</div><div>Ед.</div><div>Интервал</div><div>Референс</div>
+      </div>
+
+      <sc-for list="{{ groupsB }}" as="grp" hint-placeholder-count="3">
+        <div style="font-family:'Archivo',sans-serif; font-size:9.5px; font-weight:700; text-transform:uppercase; letter-spacing:1.2px; color:#1F7A86; padding:15px 10px 7px;">{{ grp.name }}</div>
+        <sc-for list="{{ grp.rows }}" as="row" hint-placeholder-count="7">
+          <div style="display:grid; grid-template-columns:1fr 70px 54px 92px 170px; gap:0 12px; align-items:center; min-height:31px; border-bottom:1px solid #F0F3F3; padding:3px 10px; font-size:11.5px;">
+            <div style="line-height:1.12;"><span style="font-weight:600;">{{ row.code }}</span><div style="font-size:9px; color:#8B999D;">{{ row.name }}</div></div>
+            <div style="font-weight:700; display:flex; align-items:baseline; gap:3px; color: {{ row.valueColor }};"><span>{{ row.v }}</span><span style="font-size:11px;">{{ row.arrow }}</span></div>
+            <div style="color:#8B999D; font-size:9.5px;">{{ row.unit }}</div>
+            <div style="color:#8B999D; font-size:9.5px; font-variant-numeric:tabular-nums;">{{ row.range }}</div>
+            <sc-if value="{{ showBars }}" hint-placeholder-val="{{ true }}">
+              <div style="position:relative; height:12px;">
+                <div style="position:absolute; top:50%; left:2px; right:2px; height:4px; transform:translateY(-50%); background:#EEF2F2; border-radius:3px;"></div>
+                <div style="position:absolute; top:50%; left:20%; right:20%; height:4px; transform:translateY(-50%); background:#D9EBEC; border-radius:3px;"></div>
+                <div style="position:absolute; top:50%; transform:translate(-50%,-50%) rotate(45deg); width:10px; height:10px; border-radius:2px; box-shadow:0 0 0 2px #fff; left: {{ row.leftPct }}; background: {{ row.markerColor }};"></div>
+              </div>
+            </sc-if>
+          </div>
+        </sc-for>
+      </sc-for>
+
+      <div style="margin-top:20px; display:flex; justify-content:space-between; font-size:9px; color:#9AA6A9; border-top:1px solid #E4EAEB; padding-top:11px;">
+        <span>Этот результат применим только к данной пробе. · Оператор: —</span>
+        <span>Печать: 2026-06-16 09:20</span>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{
+  &quot;$preview&quot;: { &quot;width&quot;: 890, &quot;height&quot;: 1180 },
+  &quot;reportTitle&quot;: { &quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;Отчёт об общем анализе крови&quot; },
+  &quot;showBars&quot;: { &quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: true }
+}">
+class Component extends DCLogic {
+  baseGroups() {
+    return [
+      { name: 'Лейкоциты', rows: [
+        { code:'WBC',  name:'Лейкоциты',          v:'18.9', n:18.9, unit:'×10⁹/л',  min:5.5,  max:19.5, range:'5.5–19.5' },
+        { code:'Neu#', name:'Нейтрофилы (абс.)',  v:'14.2', n:14.2, unit:'×10⁹/л',  min:2.5,  max:12.5, range:'2.5–12.5' },
+        { code:'Lym#', name:'Лимфоциты (абс.)',   v:'3.10', n:3.10, unit:'×10⁹/л',  min:1.5,  max:7.0,  range:'1.5–7.0' },
+        { code:'Mon#', name:'Моноциты (абс.)',    v:'0.52', n:0.52, unit:'×10⁹/л',  min:0.0,  max:0.85, range:'0.00–0.85' },
+        { code:'Eos#', name:'Эозинофилы (абс.)',  v:'0.85', n:0.85, unit:'×10⁹/л',  min:0.0,  max:1.5,  range:'0.00–1.50' },
+        { code:'Bas#', name:'Базофилы (абс.)',    v:'0.04', n:0.04, unit:'×10⁹/л',  min:0.0,  max:0.10, range:'0.00–0.10' },
+        { code:'Neu%', name:'Нейтрофилы',         v:'70.0', n:70.0, unit:'%',       min:35,   max:75,   range:'35.0–75.0' },
+        { code:'Lym%', name:'Лимфоциты',          v:'22.0', n:22.0, unit:'%',       min:12,   max:45,   range:'12.0–45.0' },
+        { code:'Mon%', name:'Моноциты',           v:'3.1',  n:3.1,  unit:'%',       min:1,    max:8,    range:'1.0–8.0' },
+        { code:'Eos%', name:'Эозинофилы',         v:'4.5',  n:4.5,  unit:'%',       min:0,    max:10,   range:'0.0–10.0' },
+        { code:'Bas%', name:'Базофилы',           v:'0.3',  n:0.3,  unit:'%',       min:0,    max:1.5,  range:'0.0–1.5' },
+      ]},
+      { name: 'Эритроциты', rows: [
+        { code:'RBC',  name:'Эритроциты',           v:'7.85', n:7.85, unit:'×10¹²/л', min:5.0,  max:10.0, range:'5.00–10.00' },
+        { code:'HGB',  name:'Гемоглобин',           v:'118',  n:118,  unit:'г/л',     min:80,   max:150,  range:'80–150' },
+        { code:'HCT',  name:'Гематокрит',           v:'36.2', n:36.2, unit:'%',       min:24,   max:45,   range:'24.0–45.0' },
+        { code:'MCV',  name:'Ср. объём эритроцита', v:'46.1', n:46.1, unit:'фл',      min:39,   max:55,   range:'39.0–55.0' },
+        { code:'MCH',  name:'Ср. содержание Hb',    v:'15.0', n:15.0, unit:'пг',      min:12.5, max:17.5, range:'12.5–17.5' },
+        { code:'MCHC', name:'Ср. концентрация Hb',  v:'326',  n:326,  unit:'г/л',     min:300,  max:360,  range:'300–360' },
+        { code:'RDW',  name:'Шир. распределения эр.', v:'18.9', n:18.9, unit:'%',     min:14,   max:18,   range:'14.0–18.0' },
+      ]},
+      { name: 'Тромбоциты', rows: [
+        { code:'PLT', name:'Тромбоциты',          v:'142',  n:142,  unit:'×10⁹/л', min:175, max:500, range:'175–500' },
+        { code:'MPV', name:'Ср. объём тромбоцита', v:'12.6', n:12.6, unit:'фл',     min:8,   max:18,  range:'8.0–18.0' },
+        { code:'PCT', name:'Тромбокрит',          v:'0.21', n:0.21, unit:'%',      min:0.10, max:0.50, range:'0.10–0.50' },
+      ]},
+    ];
+  }
+
+  buildGroups(p) {
+    return this.baseGroups().map(g => ({
+      name: g.name,
+      rows: g.rows.map(r => {
+        let status = 'normal';
+        if (r.n < r.min) status = 'low';
+        else if (r.n > r.max) status = 'high';
+        let pos = 20 + ((r.n - r.min) / (r.max - r.min)) * 60;
+        if (!isFinite(pos)) pos = 50;
+        pos = Math.max(4, Math.min(96, pos));
+        const flag = status !== 'normal';
+        return {
+          code: r.code, name: r.name, v: r.v, unit: r.unit, range: r.range, status, flag,
+          arrow: status === 'high' ? '↑' : status === 'low' ? '↓' : '',
+          leftPct: pos.toFixed(1) + '%',
+          markerColor: flag ? p.flag : p.normal,
+          valueColor: flag ? p.flag : p.ink,
+        };
+      })
+    }));
+  }
+
+  renderVals() {
+    return {
+      reportTitle: this.props.reportTitle ?? 'Отчёт об общем анализе крови',
+      showBars: this.props.showBars ?? true,
+      groupsB: this.buildGroups({ normal: '#2E8C97', flag: '#D1495B', ink: '#15252A' }),
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+{
+  "name": "mindray-bc2800vet-parser",
+  "version": "1.0.0",
+  "description": "Streaming parser for the Mindray BC-2800Vet hematology analyzer: serial → JSON → HTML → PDF → print",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "record": "node record.js",
+    "render:offline": "node scripts/render-offline.js",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "puppeteer": "^23.0.0",
+    "serialport": "^12.0.0"
+  }
+}
