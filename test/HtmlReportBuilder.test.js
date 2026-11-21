@@ -36,18 +36,37 @@ test('buildRow: недоступное значение (null) → прочер�
 });
 
 test('buildReportHtml: содержит три группы и номер пробы', () => {
-  const html = buildReportHtml(record, { species: 'DOG', patient: 'Барс' });
+  const html = buildReportHtml(record, { species: 'DOG' });
   assert.match(html, /Лейкоциты/);
   assert.match(html, /Эритроциты/);
   assert.match(html, /Тромбоциты/);
-  assert.match(html, /№ пробы/);
-  assert.match(html, /Барс/);
+  assert.match(html, new RegExp(`Проба<br>.*>${record.sample}<`));
   assert.match(html, /<!DOCTYPE html>/);
 });
 
-test('buildReportHtml: значение вне нормы окрашивается флаговым цветом', () => {
-  // PLT=142 в этом захвате < 200 (DOG) → должен быть флаг + стрелка вниз.
+test('buildReportHtml: шапка — только вид, врач и время анализа; футера нет', () => {
+  const html = buildReportHtml(record, { species: 'dog', doctor: 'Петров А. В.' });
+  assert.match(html, />Вид</);
+  assert.match(html, /Собака/);
+  assert.match(html, /Петров А\. В\./);
+  assert.match(html, /Время анализа/);
+  assert.match(html, new RegExp(`${record.date} ${record.time}`));
+  for (const gone of ['Пациент', 'Клиент', 'Возраст', 'Пол', 'Оператор', 'Печать:', 'применим']) {
+    assert.doesNotMatch(html, new RegExp(gone), gone);
+  }
+});
+
+test('buildReportHtml: без вида и врача — прочерки', () => {
+  const html = buildReportHtml(record, {});
+  assert.doesNotMatch(html, /Собака|Кошка/);
+  assert.equal((html.match(/>—</g) || []).length >= 2, true);
+});
+
+test('buildReportHtml: вне нормы — стрелка и сплошной маркер (без опоры на цвет)', () => {
+  // PLT=142 в этом захвате < 200 (DOG) → флаг + стрелка вниз.
   const html = buildReportHtml(record, { species: 'DOG' });
-  assert.match(html, /#D1495B/); // флаговый цвет присутствует
   assert.match(html, /↓/);
+  assert.match(html, /data-marker="out"/);
+  assert.match(html, /data-marker="in"/);
+  assert.doesNotMatch(html, /#D1495B/i); // цветной флаг на ч/б принтере не нужен
 });

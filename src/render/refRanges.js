@@ -79,6 +79,15 @@ export function displayUnit(protocolUnit) {
   return UNIT_DISPLAY[protocolUnit] ?? protocolUnit;
 }
 
+/** Отображаемые названия видов (код из env SPECIES / в будущем — из кадра). */
+export const SPECIES_LABELS = { DOG: 'Собака', CAT: 'Кошка' };
+
+/** Название вида для бланка: известный код → по-русски, иначе как есть. */
+export function speciesLabel(species) {
+  const code = String(species || '').trim();
+  return SPECIES_LABELS[code.toUpperCase()] || code;
+}
+
 /** Возвращает набор референсов по виду животного (по умолчанию DOG). */
 export function rangesForSpecies(species) {
   return REF_RANGES[String(species || 'DOG').toUpperCase()] || REF_RANGES.DOG;

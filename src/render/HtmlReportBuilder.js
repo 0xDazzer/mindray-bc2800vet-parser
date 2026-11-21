@@ -1,26 +1,25 @@
 import {
   REPORT_LAYOUT,
   rangesForSpecies,
+  speciesLabel,
   displayUnit,
   formatRange,
 } from './refRanges.js';
 
-// Дизайн-токены бланка (см. design_handoff_oak_report).
+// Дизайн-токены бланка. Палитра монохромная — бланк печатается на ч/б лазерном
+// принтере: светлые серые на нём пропадают, а цвета превращаются в одинаковый
+// серый. Поэтому только чёрный/белый и пара средних серых, а «вне нормы»
+// отличается формой маркера и начертанием значения, а не цветом.
 const T = {
-  accent: '#1F7A86',
-  markerNormal: '#2E8C97',
-  flag: '#D1495B',
-  ink: '#15252A',
-  sub: '#5C6B6F',
-  muted: '#8B999D',
-  label: '#7E8C90',
-  cardBg: '#F5F8F8',
-  pageBg: '#EDEBE4',
-  lineHard: '#E4EAEB',
-  lineSoft: '#F0F3F3',
-  track: '#EEF2F2',
-  band: '#D9EBEC',
-  footer: '#9AA6A9',
+  ink: '#000',
+  accent: '#000',
+  sub: '#222',
+  muted: '#222',
+  label: '#222',
+  lineHard: '#000',   // шапка таблицы, рамка карточки
+  lineSoft: 'rgba(0,0,0,.2)', // разделители строк — чёрные с прозрачностью 20%
+  band: '#8A8A8A',    // диапазон нормы на шкале
+  marker: '#000',
 };
 
 const COLS = 'grid-template-columns:1fr 70px 54px 92px 170px; gap:0 12px;';
@@ -67,7 +66,7 @@ export class HtmlReportBuilder {
             <div style="font-family:'Archivo',sans-serif; font-size:24px; font-weight:700; letter-spacing:-.4px; line-height:1.05;">${esc(this.title)}</div>
             <div style="font-size:11px; color:${T.sub}; margin-top:5px; letter-spacing:.2px;">Гематологическое исследование · автоматический анализатор</div>
           </div>
-          <div style="flex:none; font-family:'IBM Plex Mono',monospace; font-size:9px; color:${T.accent}; text-align:right; line-height:1.6;">№ пробы<br><span style="font-size:15px; font-weight:600; color:${T.ink};">${esc(record.sample)}</span></div>
+          <div style="flex:none; font-family:'IBM Plex Mono',monospace; font-size:9px; color:${T.accent}; text-align:right; line-height:1.6;">Проба<br><span style="font-size:15px; font-weight:600; color:${T.ink};">${esc(record.sample)}</span></div>
         </div>
       </div>`);
     return this;
@@ -78,11 +77,8 @@ export class HtmlReportBuilder {
         <div><div style="color:${T.label}; font-size:9px; text-transform:uppercase; letter-spacing:.6px; margin-bottom:2px;">${esc(label)}</div><div style="font-weight:600;">${esc(value || '—')}</div></div>`;
     const analysisTime = [record.date, record.time].filter(Boolean).join(' ');
     this._parts.push(`
-      <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:14px 22px; margin-top:22px; padding:16px 18px; background:${T.cardBg}; border-radius:8px; font-size:11.5px;">
-        ${cell('Пациент', meta.patient)}
-        ${cell('Вид · Пол', [meta.species, meta.sex].filter(Boolean).join(' · '))}
-        ${cell('Возраст', meta.age)}
-        ${cell('Клиент', meta.client)}
+      <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:14px 22px; margin-top:22px; padding:14px 18px; border:1px solid ${T.lineHard}; border-radius:6px; font-size:11.5px;">
+        ${cell('Вид', speciesLabel(meta.species))}
         ${cell('Врач', meta.doctor)}
         ${cell('Время анализа', analysisTime)}
       </div>`);
@@ -107,40 +103,32 @@ export class HtmlReportBuilder {
   // Приватный шаг: одна строка показателя + расчёт шкалы/флага.
   _row(r) {
     const flag = r.status === 'high' || r.status === 'low';
-    const valueColor = flag ? T.flag : T.ink;
     const arrow = r.status === 'high' ? '↑' : r.status === 'low' ? '↓' : '';
+    const valueStyle = flag ? 'font-weight:800; text-decoration:underline; text-underline-offset:2px;' : 'font-weight:700;';
 
     let bar = '';
     if (this.showBars && r.hasMarker) {
-      const markerColor = flag ? T.flag : T.markerNormal;
+      // Норма — белый ромб с чёрной рамкой; вне нормы — сплошной чёрный, крупнее.
+      const marker = flag
+        ? `width:12px; height:12px; background:${T.marker}; box-shadow:0 0 0 1.5px #fff;`
+        : `width:10px; height:10px; background:#fff; border:1.5px solid ${T.marker};`;
       bar = `
             <div style="position:relative; height:12px;">
-              <div style="position:absolute; top:50%; left:2px; right:2px; height:4px; transform:translateY(-50%); background:${T.track}; border-radius:3px;"></div>
-              <div style="position:absolute; top:50%; left:20%; right:20%; height:4px; transform:translateY(-50%); background:${T.band}; border-radius:3px;"></div>
-              <div style="position:absolute; top:50%; transform:translate(-50%,-50%) rotate(45deg); width:10px; height:10px; border-radius:2px; box-shadow:0 0 0 2px #fff; left:${r.leftPct}; background:${markerColor};"></div>
+              <div style="position:absolute; top:50%; left:2px; right:2px; height:6px; transform:translateY(-50%); background:#fff; border:1px solid ${T.lineHard}; border-radius:3px;"></div>
+              <div style="position:absolute; top:50%; left:20%; right:20%; height:4px; transform:translateY(-50%); background:${T.band};"></div>
+              <div data-marker="${flag ? 'out' : 'in'}" style="position:absolute; top:50%; transform:translate(-50%,-50%) rotate(45deg); border-radius:1px; left:${r.leftPct}; ${marker}"></div>
             </div>`;
     } else {
       bar = '<div></div>';
     }
 
     return `
-          <div style="display:grid; ${COLS} align-items:center; min-height:31px; border-bottom:1px solid ${T.lineSoft}; padding:3px 10px; font-size:11.5px;">
-            <div style="line-height:1.12;"><span style="font-weight:600;">${esc(r.code)}</span><div style="font-size:9px; color:${T.muted};">${esc(r.name)}</div></div>
-            <div style="font-weight:700; display:flex; align-items:baseline; gap:3px; color:${valueColor};"><span>${esc(r.v)}</span><span style="font-size:11px;">${arrow}</span></div>
-            <div style="color:${T.muted}; font-size:9.5px;">${esc(r.unit)}</div>
-            <div style="color:${T.muted}; font-size:9.5px; font-variant-numeric:tabular-nums;">${esc(r.range)}</div>${bar}
+          <div style="display:grid; ${COLS} align-items:center; min-height:31px; border-bottom:0.5px solid ${T.lineSoft}; padding:3px 10px; font-size:11.5px;">
+            <div style="line-height:1.12;"><span style="font-weight:600;">${esc(r.name)}</span><div style="font-size:9px; color:${T.muted};">${esc(r.code)}</div></div>
+            <div style="display:flex; align-items:baseline; gap:3px; color:${T.ink};"><span style="${valueStyle}">${esc(r.v)}</span><span style="font-size:11px; font-weight:700;">${arrow}</span></div>
+            <div style="color:${T.ink}; font-size:11px;">${esc(r.unit)}</div>
+            <div style="color:${T.ink}; font-size:11px; font-variant-numeric:tabular-nums;">${esc(r.range)}</div>${bar}
           </div>`;
-  }
-
-  footer(meta) {
-    const operator = meta.operator ? esc(meta.operator) : '—';
-    const printedAt = esc(meta.printedAt || '');
-    this._parts.push(`
-      <div style="margin-top:20px; display:flex; justify-content:space-between; font-size:9px; color:${T.footer}; border-top:1px solid ${T.lineHard}; padding-top:11px;">
-        <span>Этот результат применим только к данной пробе. · Оператор: ${operator}</span>
-        <span>Печать: ${printedAt}</span>
-      </div>`);
-    return this;
   }
 
   build() {
@@ -174,7 +162,7 @@ ${body}
  * записи и референсов вида. Возвращает готовый HTML-бланк.
  *
  * @param {object} record  результат parseRecord
- * @param {object} [meta]   метаданные пациента/печати (инжектятся снаружи)
+ * @param {object} [meta]   метаданные бланка: species, doctor (инжектятся снаружи)
  * @param {object} [ranges] набор референсов; по умолчанию — по meta.species
  */
 export function buildReportHtml(record, meta = {}, ranges = null) {
@@ -192,7 +180,7 @@ export function buildReportHtml(record, meta = {}, ranges = null) {
     builder.group(grp.name, rows);
   }
 
-  return builder.footer(meta).build();
+  return builder.build();
 }
 
 /** Превращает один разобранный показатель в данные строки бланка. */

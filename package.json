@@ -6,7 +6,7 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "record": "node record.js",
+    "record": "node materials/record.cjs",
     "render:offline": "node scripts/render-offline.js",
     "test": "node --test"
   },

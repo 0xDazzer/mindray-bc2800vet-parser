@@ -3,7 +3,7 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
 const here = dirname(fileURLToPath(import.meta.url));
-export const CAPTURES_DIR = join(here, '..', '..', 'captures');
+export const CAPTURES_DIR = join(here, '..', '..', 'materials', 'captures');
 
 const START = 0x41; // 'A'
 const isTerminator = (b) => b <= 0x1f || b === 0x7f;

@@ -11,27 +11,41 @@ import { createRendererStream } from './src/render/createRendererStream.js';
 //   SerialPort (Readable)  →  Parser (Transform)  →  Renderer (Writable)
 //      сырые байты            кадры + parse →JSON     JSON → HTML → PDF → печать
 //
-// Метаданные пациента/вида не приходят по проводу — задаются здесь (в реальном
-// приложении их вводит оператор перед запуском пробы).
+// PDF живёт только в памяти и уходит прямо в `lp` — на диск не сохраняется.
+// Врач и вид животного по проводу не приходят — задаются в env-файле службы.
 // =============================================================================
 
 const meta = {
-  species: process.env.SPECIES || 'DOG',
-  patient: process.env.PATIENT || '',
-  sex: process.env.SEX || '',
-  age: process.env.AGE || '',
-  client: process.env.CLIENT || '',
+  // TODO: вид брать из кадра анализатора (цифра «режима» в parseRecord), когда
+  //       будет известна кодировка; пока — из env, по нему же выбираются референсы.
+  species: process.env.SPECIES || '',
   doctor: process.env.DOCTOR || '',
-  operator: process.env.OPERATOR || '',
 };
 
 const source = createReadableStream();
 const parser = createParserStream({ parse: parseRecord });
 const pdfEngine = createPdfEngine();
-const printer = createPrinter();
-const renderer = createRendererStream({ pdfEngine, printer, meta });
+const basePrinter = createPrinter();
 
-source.on('open', () => console.log('Listening on serial port as 9600 7O1'));
+const printer = {
+  async print(pdf, opts) {
+    await basePrinter.print(pdf, opts);
+    console.log(`Отправлено на печать: ${opts?.title}`);
+  },
+};
+
+const renderer = createRendererStream({
+  pdfEngine,
+  printer,
+  meta,
+  // Сбой печати/рендера одной пробы не должен останавливать приём следующих.
+  onError: (err, record) =>
+    console.error(`Проба ${record?.sample} (${record?.date} ${record?.time}): ошибка — ` +
+      `${err.message}. Переотправьте результат с анализатора.`),
+});
+
+source.on('open', () => console.log(`Слушаю ${source.path} (9600 7O1)`));
+source.on('close', () => console.error('Порт закрыт (анализатор/кабель отключён?)'));
 parser.on('recordError', (err, frame) =>
   console.error('Parse error:', err.message, '| frame:', JSON.stringify(frame)));
 

@@ -1,0 +1,19 @@
+# Пользовательская служба systemd: приём результатов с BC-2800Vet → PDF → печать.
+# Установка: см. deploy/install.sh
+[Unit]
+Description=Mindray BC-2800Vet: приём анализов по COM-порту, PDF и печать
+After=network.target cups.service
+# Не прекращать перезапуски, сколько бы раз порт ни отваливался.
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+WorkingDirectory=%h/mindray-bc2800vet-parser
+EnvironmentFile=%h/.config/oak-printer.env
+ExecStart=/usr/bin/node index.js
+# Порт закрылся (кабель/анализатор отключён) или не открылся — пробуем снова.
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=default.target
