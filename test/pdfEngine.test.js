@@ -23,3 +23,20 @@ test('htmlToPdf возвращает валидный PDF-буфер', { skip: !
     await engine.close();
   }
 });
+
+test('htmlToPdf восстанавливается после обрыва связи с Chromium', { skip: !enabled }, async () => {
+  const record = parseRecord(readBinFrames(listBinCaptures()[0])[0]);
+  const html = buildReportHtml(record, { species: 'DOG', patient: 'Тест' });
+
+  const engine = createPdfEngine();
+  try {
+    await engine.htmlToPdf(html);
+    // Имитируем обрыв: убиваем процесс Chromium из-под движка.
+    engine._browser.process().kill('SIGKILL');
+    await new Promise((r) => setTimeout(r, 500));
+    const pdf = await engine.htmlToPdf(html);
+    assert.equal(pdf.subarray(0, 5).toString('ascii'), '%PDF-');
+  } finally {
+    await engine.close();
+  }
+});
