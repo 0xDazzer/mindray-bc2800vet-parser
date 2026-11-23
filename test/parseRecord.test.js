@@ -58,3 +58,42 @@ test('гистограммы: 3 × 256 каналов', () => {
 test('кадр без идентификатора "A" бросает ошибку', () => {
   assert.throws(() => parseRecord('0000001300'), /идентификатор/);
 });
+
+// Вид животного: позиции 99–100 тела кадра. Порядок видов в захватах —
+// как их отправляли с анализатора 2026-11-23.
+const speciesOf = (tag) =>
+  readBinFrames(listBinCaptures().find((p) => p.includes(tag))).map((f) => parseRecord(f).species);
+const repeat = (key, n) => Array(n).fill(key);
+
+test('вид: 5 кошек, затем 5 собак', () => {
+  assert.deepEqual(speciesOf('09-50-51'), [...repeat('CAT', 5), ...repeat('DOG', 5)]);
+});
+
+test('вид: кошка, затем собака (первый захват)', () => {
+  assert.deepEqual(speciesOf('09-45-00'), ['CAT', 'DOG']);
+});
+
+test('вид: лошадь (×2), обезьяна (×2)', () => {
+  assert.deepEqual(speciesOf('10-02-49'), ['HORSE', 'HORSE', 'MONKEY', 'MONKEY']);
+});
+
+test('вид: 5 обезьян (код «16» — две цифры)', () => {
+  assert.deepEqual(speciesOf('10-19-26'), repeat('MONKEY', 5));
+});
+
+test('вид: козёл, 8 кроликов, 7 коров, 7 овец, 11 лошадей', () => {
+  assert.deepEqual(speciesOf('10-32-16'), [
+    'GOAT', ...repeat('RABBIT', 8), ...repeat('COW', 7), ...repeat('SHEEP', 7), ...repeat('HORSE', 11),
+  ]);
+});
+
+test('вид: сырой код сохраняется, неизвестный код → species null', () => {
+  const rec = parseRecord(SAMPLE_FRAME);
+  assert.equal(rec.speciesCode, '01');
+  assert.equal(rec.species, 'CAT');
+
+  const unknown = parseRecord(SAMPLE_FRAME.slice(0, 99) + '99' + SAMPLE_FRAME.slice(101));
+  assert.equal(unknown.speciesCode, '99');
+  assert.equal(unknown.species, null);
+  assert.equal(unknown.results.WBC.value, 5.8); // остальной разбор не задет
+});

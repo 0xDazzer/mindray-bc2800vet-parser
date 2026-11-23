@@ -36,8 +36,8 @@ const filePrinter = {
   },
 };
 
-// Как в боевом index.js: вид и врач — из env (здесь — демо-значения).
-const meta = { species: 'DOG', doctor: 'Петров А. В.' };
+// Как в боевом index.js: вид — из кадра, врач — из env (здесь — демо-значение).
+const meta = { doctor: 'Петров А. В.' };
 
 const source = Readable.from([readFileSync(binPath)]);
 const parser = createParserStream({ parse: parseRecord });

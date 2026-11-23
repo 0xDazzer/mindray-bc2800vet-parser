@@ -9,10 +9,13 @@
 // Заголовок тела (порядок ФИКСИРОВАН независимо от формата на ЖКД):
 //   Код пробы 8 цифр · Режим 1 цифра · ММ 2 · ДД 2 · ГГГГ 4 · ЧЧ 2 · ММ 2
 //   ВНИМАНИЕ: дата идёт в порядке ММ-ДД-ГГГГ, секунды vet-прошивка не шлёт.
+// Вид животного — 2 цифры на позициях 99–100 тела (см. species.js).
 //
 // Этот модуль — ЧИСТАЯ функция парсинга одного кадра (без I/O), пригодная для
 // модульных тестов на реальных захватах из captures/.
 // =============================================================================
+
+import { SPECIES_CODE_OFFSET, SPECIES_CODE_WIDTH, speciesByCode } from './species.js';
 
 /** Идентификатор кадра пробы. */
 export const RECORD_ID = 'A';
@@ -55,7 +58,9 @@ function decimalsForDivisor(div) {
  *
  * @param {string} frameText  тело кадра, декодированное в ASCII
  * @returns {{sample:number, mode:string, date:string, time:string,
+ *            speciesCode:string, species:(string|null),
  *            results:Object, histogram:Object, aux:number[]}}
+ *          species — ключ вида (DOG, CAT, …) или null, если код неизвестен.
  */
 export function parseRecord(frameText) {
   let p = 0;
@@ -98,9 +103,14 @@ export function parseRecord(frameText) {
     aux = tail.slice(0, tail.length - need); // флаги + области (сырьём)
   }
 
+  const speciesCode = frameText.slice(
+    SPECIES_CODE_OFFSET, SPECIES_CODE_OFFSET + SPECIES_CODE_WIDTH);
+
   return {
     sample,
     mode,
+    speciesCode,
+    species: speciesByCode(speciesCode)?.key ?? null,
     date: `${YYYY}-${MM}-${DD}`,
     time: `${HH}:${Min}`,
     results,

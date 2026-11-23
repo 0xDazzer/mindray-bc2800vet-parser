@@ -78,7 +78,7 @@ export class HtmlReportBuilder {
     const analysisTime = [record.date, record.time].filter(Boolean).join(' ');
     this._parts.push(`
       <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:14px 22px; margin-top:22px; padding:14px 18px; border:1px solid ${T.lineHard}; border-radius:6px; font-size:11.5px;">
-        ${cell('Вид', speciesLabel(meta.species))}
+        ${cell('Вид', speciesLabel(record.species))}
         ${cell('Врач', meta.doctor)}
         ${cell('Время анализа', analysisTime)}
       </div>`);
@@ -162,11 +162,11 @@ ${body}
  * записи и референсов вида. Возвращает готовый HTML-бланк.
  *
  * @param {object} record  результат parseRecord
- * @param {object} [meta]   метаданные бланка: species, doctor (инжектятся снаружи)
- * @param {object} [ranges] набор референсов; по умолчанию — по meta.species
+ * @param {object} [meta]   метаданные бланка: doctor (инжектятся снаружи)
+ * @param {object} [ranges] набор референсов; по умолчанию — по виду из кадра
  */
 export function buildReportHtml(record, meta = {}, ranges = null) {
-  const refs = ranges || rangesForSpecies(meta.species);
+  const refs = ranges || rangesForSpecies(record.species);
   const builder = new HtmlReportBuilder()
     .setTitle(meta.reportTitle)
     .setShowBars(meta.showBars)

@@ -5,8 +5,10 @@ import { buildReportHtml, buildRow } from '../src/render/HtmlReportBuilder.js';
 import { parseRecord } from '../src/protocol/parseRecord.js';
 import { listBinCaptures, readBinFrames } from './helpers/captures.js';
 
+// Захват 12-44-20 — код вида «01», кошка.
 const record = parseRecord(
   readBinFrames(listBinCaptures().find((p) => p.includes('12-44-20')))[0]);
+const withSpecies = (species) => ({ ...record, species });
 
 test('buildRow: значение в норме → нет флага, маркер 20–80%', () => {
   const row = buildRow('WBC', 'Лейкоциты', { value: 11, unit: '10^9/L', decimals: 1 }, [6, 17]);
@@ -36,7 +38,7 @@ test('buildRow: недоступное значение (null) → прочер�
 });
 
 test('buildReportHtml: содержит три группы и номер пробы', () => {
-  const html = buildReportHtml(record, { species: 'DOG' });
+  const html = buildReportHtml(record);
   assert.match(html, /Лейкоциты/);
   assert.match(html, /Эритроциты/);
   assert.match(html, /Тромбоциты/);
@@ -45,9 +47,9 @@ test('buildReportHtml: содержит три группы и номер про
 });
 
 test('buildReportHtml: шапка — только вид, врач и время анализа; футера нет', () => {
-  const html = buildReportHtml(record, { species: 'dog', doctor: 'Петров А. В.' });
+  const html = buildReportHtml(record, { doctor: 'Петров А. В.' });
   assert.match(html, />Вид</);
-  assert.match(html, /Собака/);
+  assert.match(html, /Кошка/); // вид — из кадра, не из meta
   assert.match(html, /Петров А\. В\./);
   assert.match(html, /Время анализа/);
   assert.match(html, new RegExp(`${record.date} ${record.time}`));
@@ -56,15 +58,36 @@ test('buildReportHtml: шапка — только вид, врач и врем�
   }
 });
 
-test('buildReportHtml: без вида и врача — прочерки', () => {
-  const html = buildReportHtml(record, {});
+test('buildReportHtml: вид неизвестен — «Вид» с прочерком, интервалов и шкалы нет', () => {
+  const html = buildReportHtml(withSpecies(null), {});
+  assert.match(html, />Вид</);
   assert.doesNotMatch(html, /Собака|Кошка/);
   assert.equal((html.match(/>—</g) || []).length >= 2, true);
+  assert.doesNotMatch(html, /data-marker/);
+  assert.doesNotMatch(html, /[↑↓]/);
+  assert.doesNotMatch(html, /5\.5–19\.5/); // кошачий интервал WBC
+});
+
+test('buildReportHtml: вид без интервалов (лошадь) — вид в шапке, интервалы пустые', () => {
+  const html = buildReportHtml(withSpecies('HORSE'));
+  assert.match(html, /Лошадь/);
+  assert.doesNotMatch(html, /data-marker/);
+  assert.doesNotMatch(html, /[↑↓]/);
+  assert.doesNotMatch(html, /\d–\d/);
+});
+
+test('buildReportHtml: собака и кошка — свои интервалы', () => {
+  const dog = buildReportHtml(withSpecies('DOG'));
+  assert.match(dog, /Собака/);
+  assert.match(dog, /6–17/);      // WBC DOG
+  const cat = buildReportHtml(withSpecies('CAT'));
+  assert.match(cat, /Кошка/);
+  assert.match(cat, /5\.5–19\.5/); // WBC CAT
 });
 
 test('buildReportHtml: вне нормы — стрелка и сплошной маркер (без опоры на цвет)', () => {
-  // PLT=142 в этом захвате < 200 (DOG) → флаг + стрелка вниз.
-  const html = buildReportHtml(record, { species: 'DOG' });
+  // Как собака: WBC=5.8 < 6 → ↓; LYM%=35 > 30 → ↑.
+  const html = buildReportHtml(withSpecies('DOG'));
   assert.match(html, /↓/);
   assert.match(html, /data-marker="out"/);
   assert.match(html, /data-marker="in"/);
