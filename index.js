@@ -12,12 +12,10 @@ import { createRendererStream } from './src/render/createRendererStream.js';
 //      сырые байты            кадры + parse →JSON     JSON → HTML → PDF → печать
 //
 // PDF живёт только в памяти и уходит прямо в `lp` — на диск не сохраняется.
-// Вид животного берётся из кадра; врач по проводу не приходит — задаётся в env.
+// Вид животного берётся из кадра; пациент, кличка и возраст вписываются от руки.
 // =============================================================================
 
-const meta = {
-  doctor: process.env.DOCTOR || '',
-};
+const meta = {};
 
 const source = createReadableStream();
 const parser = createParserStream({ parse: parseRecord });

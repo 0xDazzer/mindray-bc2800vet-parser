@@ -37,23 +37,27 @@ test('buildRow: недоступное значение (null) → прочер�
   assert.equal(row.hasMarker, false);
 });
 
-test('buildReportHtml: содержит три группы и номер пробы', () => {
+test('buildReportHtml: содержит три группы, номера пробы на бланке нет', () => {
   const html = buildReportHtml(record);
   assert.match(html, /Лейкоциты/);
   assert.match(html, /Эритроциты/);
   assert.match(html, /Тромбоциты/);
-  assert.match(html, new RegExp(`Проба<br>.*>${record.sample}<`));
+  assert.doesNotMatch(html, /Проба/);
   assert.match(html, /<!DOCTYPE html>/);
 });
 
-test('buildReportHtml: шапка — только вид, врач и время анализа; футера нет', () => {
-  const html = buildReportHtml(record, { doctor: 'Петров А. В.' });
+test('buildReportHtml: шапка — пациент, кличка, вид, возраст, время анализа; врача и футера нет', () => {
+  const html = buildReportHtml(record);
   assert.match(html, />Вид</);
   assert.match(html, /Кошка/); // вид — из кадра, не из meta
-  assert.match(html, /Петров А\. В\./);
   assert.match(html, /Время анализа/);
   assert.match(html, new RegExp(`${record.date} ${record.time}`));
-  for (const gone of ['Пациент', 'Клиент', 'Возраст', 'Пол', 'Оператор', 'Печать:', 'применим']) {
+  // Поля для ручного заполнения — пустые, с подчёркиванием.
+  for (const label of ['Пациент', 'Кличка животного', 'Возраст']) {
+    assert.match(html, new RegExp(`data-handwrite>.*?>${label}<\\/div><div style="width:[\\d.]+%; height:20px; border-bottom:1px solid #000;"><\\/div>`, 's'), label);
+  }
+  assert.equal((html.match(/data-handwrite/g) || []).length, 3);
+  for (const gone of ['Врач', 'Клиент', 'Пол', 'Оператор', 'Печать:', 'применим']) {
     assert.doesNotMatch(html, new RegExp(gone), gone);
   }
 });
@@ -68,12 +72,14 @@ test('buildReportHtml: вид неизвестен — «Вид» с проче�
   assert.doesNotMatch(html, /5\.5–19\.5/); // кошачий интервал WBC
 });
 
-test('buildReportHtml: вид без интервалов (лошадь) — вид в шапке, интервалы пустые', () => {
+test('buildReportHtml: лошадь — свои интервалы; пустые на экране прибора — пустые', () => {
   const html = buildReportHtml(withSpecies('HORSE'));
   assert.match(html, /Лошадь/);
-  assert.doesNotMatch(html, /data-marker/);
-  assert.doesNotMatch(html, /[↑↓]/);
-  assert.doesNotMatch(html, /\d–\d/);
+  assert.match(html, /5–11/);     // WBC HORSE
+  assert.match(html, /data-marker/);
+  const pig = buildReportHtml(withSpecies('PIG'));
+  assert.match(pig, /11–22/);     // WBC PIG
+  assert.doesNotMatch(pig, /20–80/); // LYM% у свиньи на экране пуст
 });
 
 test('buildReportHtml: собака и кошка — свои интервалы', () => {

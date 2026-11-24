@@ -42,7 +42,7 @@ function clamp(n, lo, hi) {
  */
 export class HtmlReportBuilder {
   constructor() {
-    this.title = 'Отчёт об общем анализе крови';
+    this.title = 'Общий анализ крови';
     this.showBars = true;
     this._parts = [];
   }
@@ -66,21 +66,31 @@ export class HtmlReportBuilder {
             <div style="font-family:'Archivo',sans-serif; font-size:24px; font-weight:700; letter-spacing:-.4px; line-height:1.05;">${esc(this.title)}</div>
             <div style="font-size:11px; color:${T.sub}; margin-top:5px; letter-spacing:.2px;">Гематологическое исследование · автоматический анализатор</div>
           </div>
-          <div style="flex:none; font-family:'IBM Plex Mono',monospace; font-size:9px; color:${T.accent}; text-align:right; line-height:1.6;">Проба<br><span style="font-size:15px; font-weight:600; color:${T.ink};">${esc(record.sample)}</span></div>
         </div>
       </div>`);
     return this;
   }
 
   patientCard(meta, record) {
-    const cell = (label, value) => `
-        <div><div style="color:${T.label}; font-size:9px; text-transform:uppercase; letter-spacing:.6px; margin-bottom:2px;">${esc(label)}</div><div style="font-weight:600;">${esc(value || '—')}</div></div>`;
+    const label = (text) =>
+      `<div style="color:${T.label}; font-size:9px; text-transform:uppercase; letter-spacing:.6px; margin-bottom:2px;">${esc(text)}</div>`;
+    const cell = (text, value) => `
+        <div>${label(text)}<div style="height:20px; display:flex; align-items:flex-end; font-weight:600;">${esc(value || '—')}</div></div>`;
+    // Поле для ручного заполнения: пустая строка с подчёркиванием под рукописный текст.
+    const blank = (text, width = '100%') => `
+        <div data-handwrite>${label(text)}<div style="width:${width}; height:20px; border-bottom:1px solid ${T.lineHard};"></div></div>`;
     const analysisTime = [record.date, record.time].filter(Boolean).join(' ');
     this._parts.push(`
-      <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:14px 22px; margin-top:22px; padding:14px 18px; border:1px solid ${T.lineHard}; border-radius:6px; font-size:11.5px;">
-        ${cell('Вид', speciesLabel(record.species))}
-        ${cell('Врач', meta.doctor)}
-        ${cell('Время анализа', analysisTime)}
+      <div style="margin-top:22px; padding:14px 18px; border:1px solid ${T.lineHard}; border-radius:6px; font-size:11.5px;">
+        <div style="display:grid; grid-template-columns:repeat(2,1fr); gap:14px 22px; margin-bottom:14px;">
+          ${blank('Пациент')}
+          ${blank('Кличка животного')}
+        </div>
+        <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:14px 22px;">
+          ${cell('Вид', speciesLabel(record.species))}
+          ${blank('Возраст', '66.67%')}
+          ${cell('Время анализа', analysisTime)}
+        </div>
       </div>`);
     return this;
   }
@@ -162,7 +172,7 @@ ${body}
  * записи и референсов вида. Возвращает готовый HTML-бланк.
  *
  * @param {object} record  результат parseRecord
- * @param {object} [meta]   метаданные бланка: doctor (инжектятся снаружи)
+ * @param {object} [meta]   метаданные бланка: reportTitle, showBars
  * @param {object} [ranges] набор референсов; по умолчанию — по виду из кадра
  */
 export function buildReportHtml(record, meta = {}, ranges = null) {

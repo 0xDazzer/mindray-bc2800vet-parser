@@ -11,7 +11,7 @@ const enabled = process.env.PDF_SMOKE === '1';
 
 test('htmlToPdf возвращает валидный PDF-буфер', { skip: !enabled }, async () => {
   const record = parseRecord(readBinFrames(listBinCaptures()[0])[0]);
-  const html = buildReportHtml(record, { doctor: 'Тест' });
+  const html = buildReportHtml(record);
 
   const engine = createPdfEngine();
   try {
@@ -26,7 +26,7 @@ test('htmlToPdf возвращает валидный PDF-буфер', { skip: !
 
 test('htmlToPdf восстанавливается после обрыва связи с Chromium', { skip: !enabled }, async () => {
   const record = parseRecord(readBinFrames(listBinCaptures()[0])[0]);
-  const html = buildReportHtml(record, { doctor: 'Тест' });
+  const html = buildReportHtml(record);
 
   const engine = createPdfEngine();
   try {
